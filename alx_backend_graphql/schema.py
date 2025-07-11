@@ -1,3 +1,7 @@
+"""
+This file is a reference to the actual schema file in alx_backend_graphql_crm.
+"""
+
 import graphene
 from graphene_django import DjangoObjectType
 from crm.models import Customer, Product, Order, OrderItem
@@ -30,15 +34,12 @@ class OrderItemType(DjangoObjectType):
 class Query(graphene.ObjectType):
     hello = graphene.String(default_value="Hello, GraphQL!")
     
-    # Customer queries
     all_customers = graphene.List(CustomerType)
     customer_by_id = graphene.Field(CustomerType, id=graphene.Int(required=True))
     
-    # Product queries
     all_products = graphene.List(ProductType)
     product_by_id = graphene.Field(ProductType, id=graphene.Int(required=True))
     
-    # Order queries
     all_orders = graphene.List(OrderType)
     order_by_id = graphene.Field(OrderType, id=graphene.Int(required=True))
 
