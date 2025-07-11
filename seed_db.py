@@ -8,7 +8,6 @@ import django
 import random
 from decimal import Decimal
 
-# Set up Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'alx_backend_graphql_crm.settings')
 django.setup()
 
@@ -111,13 +110,11 @@ def create_orders(customers, products):
     print("Creating orders...")
     created_orders = []
     
-    # Create 1-2 orders for each customer
     for customer in customers:
         num_orders = random.randint(1, 2)
         for _ in range(num_orders):
             order = Order.objects.create(customer=customer)
             
-            # Add 1-3 products to each order
             num_products = random.randint(1, 3)
             selected_products = random.sample(products, min(num_products, len(products)))
             
@@ -138,7 +135,6 @@ def seed_database():
     """Main function to seed the database"""
     print("Starting database seeding...")
     
-    # Check if data already exists
     if Customer.objects.exists() and Product.objects.exists() and Order.objects.exists():
         print("Database already contains data. Skipping seeding.")
         return

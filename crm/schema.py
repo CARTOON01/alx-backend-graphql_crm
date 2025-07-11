@@ -39,7 +39,6 @@ class OrderItemType(DjangoObjectType):
         fields = "__all__"
 
 
-# Input types for mutations
 class CustomerInput(graphene.InputObjectType):
     name = graphene.String(required=True)
     email = graphene.String(required=True)
@@ -58,7 +57,6 @@ class OrderInput(graphene.InputObjectType):
     order_date = graphene.DateTime(required=False)
 
 
-# Mutations
 class CreateCustomer(graphene.Mutation):
     class Arguments:
         input = CustomerInput(required=True)
@@ -69,21 +67,17 @@ class CreateCustomer(graphene.Mutation):
     @staticmethod
     def validate_phone(phone):
         if phone:
-            # Pattern matches +1234567890 or 123-456-7890
             pattern = r'^\+?[0-9]{10,15}$|^[0-9]{3}-[0-9]{3}-[0-9]{4}$'
             if not re.match(pattern, phone):
                 raise ValidationError("Invalid phone format. Use +1234567890 or 123-456-7890")
     
     def mutate(self, info, input):
         try:
-            # Validate email uniqueness (Django will handle this as well, but we add explicit check)
             if Customer.objects.filter(email=input.email).exists():
                 return CreateCustomer(customer=None, message="Email already exists")
             
-            # Validate phone format
             self.validate_phone(input.phone)
             
-            # Create customer
             customer = Customer(
                 name=input.name,
                 email=input.email,
@@ -112,19 +106,16 @@ class BulkCreateCustomers(graphene.Mutation):
         with transaction.atomic():
             for i, customer_data in enumerate(input):
                 try:
-                    # Validate email uniqueness
                     if Customer.objects.filter(email=customer_data.email).exists():
                         errors.append(f"Customer {i+1}: Email {customer_data.email} already exists")
                         continue
                     
-                    # Validate phone format
                     if customer_data.phone:
                         pattern = r'^\+?[0-9]{10,15}$|^[0-9]{3}-[0-9]{3}-[0-9]{4}$'
                         if not re.match(pattern, customer_data.phone):
                             errors.append(f"Customer {i+1}: Invalid phone format. Use +1234567890 or 123-456-7890")
                             continue
                     
-                    # Create customer
                     customer = Customer(
                         name=customer_data.name,
                         email=customer_data.email,
@@ -146,15 +137,12 @@ class CreateProduct(graphene.Mutation):
     
     def mutate(self, info, input):
         try:
-            # Validate price is positive
             if input.price <= 0:
                 raise ValidationError("Price must be positive")
             
-            # Validate stock is non-negative if provided
             if input.stock is not None and input.stock < 0:
                 raise ValidationError("Stock cannot be negative")
             
-            # Create product
             product = Product(
                 name=input.name,
                 price=input.price,
@@ -175,17 +163,14 @@ class CreateOrder(graphene.Mutation):
     
     def mutate(self, info, input):
         try:
-            # Validate customer exists
             try:
                 customer = Customer.objects.get(pk=input.customer_id)
             except Customer.DoesNotExist:
                 raise ValidationError(f"Customer with ID {input.customer_id} does not exist")
             
-            # Validate at least one product is selected
             if not input.product_ids or len(input.product_ids) == 0:
                 raise ValidationError("At least one product must be selected")
             
-            # Validate products exist
             products = []
             for product_id in input.product_ids:
                 try:
@@ -194,20 +179,17 @@ class CreateOrder(graphene.Mutation):
                 except Product.DoesNotExist:
                     raise ValidationError(f"Product with ID {product_id} does not exist")
             
-            # Create order
             with transaction.atomic():
                 order = Order(
                     customer=customer,
-                    # order_date will use auto_now_add
                 )
                 order.save()
                 
-                # Add products to order
                 for product in products:
                     order_item = OrderItem(
                         order=order,
                         product=product,
-                        quantity=1  # Default quantity
+                        quantity=1 
                     )
                     order_item.save()
             

@@ -5,7 +5,7 @@ This file is a reference to the actual schema file in alx_backend_graphql_crm.
 import graphene
 from graphene_django import DjangoObjectType
 from crm.models import Customer, Product, Order, OrderItem
-from alx_backend_graphql_crm.schema import Query as CRMQuery
+from crm.schema import Query as CRMQuery
 
 
 class CustomerType(DjangoObjectType):
@@ -33,7 +33,6 @@ class OrderItemType(DjangoObjectType):
 
 
 class Query(CRMQuery, graphene.ObjectType):
-    # Additional fields can be added here
     pass
 
 
