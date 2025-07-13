@@ -7,7 +7,6 @@ from datetime import datetime
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
-# Setup Django environment
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(script_dir))
 sys.path.append(project_root)
@@ -24,11 +23,9 @@ def send_order_reminders():
     graphql_endpoint = "http://localhost:8000/graphql"
     
     try:
-        # Create GraphQL client
         transport = RequestsHTTPTransport(url=graphql_endpoint)
         client = Client(transport=transport, fetch_schema_from_transport=True)
         
-        # Define GraphQL query
         query = gql("""
             query {
                 pendingOrdersLastWeek {
@@ -44,10 +41,8 @@ def send_order_reminders():
             }
         """)
         
-        # Execute query
         result = client.execute(query)
         
-        # Process results and log reminders
         orders = result.get('pendingOrdersLastWeek', [])
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
