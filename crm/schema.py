@@ -3,6 +3,8 @@ from graphene_django import DjangoObjectType
 import re
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta
 from .models import Customer, Product, Order, OrderItem
 
 
@@ -216,6 +218,7 @@ class Query(graphene.ObjectType):
     
     all_orders = graphene.List(OrderType)
     order_by_id = graphene.Field(OrderType, id=graphene.Int(required=True))
+    pending_orders_last_week = graphene.List(OrderType)
 
     def resolve_all_customers(self, info):
         return Customer.objects.all()
@@ -243,3 +246,10 @@ class Query(graphene.ObjectType):
             return Order.objects.get(pk=id)
         except Order.DoesNotExist:
             return None
+    
+    def resolve_pending_orders_last_week(self, info):
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        return Order.objects.filter(
+            status='pending',
+            date_ordered__gte=seven_days_ago
+        ).select_related('customer')
