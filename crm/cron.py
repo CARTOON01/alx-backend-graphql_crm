@@ -28,7 +28,7 @@ def log_crm_heartbeat():
             data = json.dumps(query).encode('utf-8')
             
             req = urllib.request.Request(
-                'http://localhost:8000/graphql/',
+                'http://localhost:8000/graphql',
                 data=data,
                 headers={'Content-Type': 'application/json'}
             )
