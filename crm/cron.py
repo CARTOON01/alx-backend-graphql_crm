@@ -4,6 +4,8 @@ import urllib.request
 import urllib.parse
 from datetime import datetime
 from django.conf import settings
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 
 
 def log_crm_heartbeat():
@@ -21,29 +23,53 @@ def log_crm_heartbeat():
             log_file.write(heartbeat_message)
         
         try:
-            query = {
-                "query": "{ hello }"
-            }
-            
-            data = json.dumps(query).encode('utf-8')
-            
-            req = urllib.request.Request(
-                'http://localhost:8000/graphql',
-                data=data,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            with urllib.request.urlopen(req, timeout=5) as response:
-                result = json.loads(response.read().decode('utf-8'))
+            # Try using gql library first
+            try:
+                transport = RequestsHTTPTransport(url="http://localhost:8000/graphql")
+                client = Client(transport=transport, fetch_schema_from_transport=False)
                 
-                if 'data' in result and 'hello' in result['data']:
-                    graphql_status = f"{timestamp} GraphQL endpoint responsive: {result['data']['hello']}\n"
+                query = gql("""
+                    query {
+                        hello
+                    }
+                """)
+                
+                result = client.execute(query)
+                
+                if 'hello' in result:
+                    graphql_status = f"{timestamp} GraphQL endpoint responsive: {result['hello']}\n"
                     with open(log_file_path, "a") as log_file:
                         log_file.write(graphql_status)
                 else:
                     error_message = f"{timestamp} GraphQL endpoint error: Invalid response format\n"
                     with open(log_file_path, "a") as log_file:
                         log_file.write(error_message)
+                        
+            except ImportError:
+                # Fallback to urllib if gql is not available
+                query = {
+                    "query": "{ hello }"
+                }
+                
+                data = json.dumps(query).encode('utf-8')
+                
+                req = urllib.request.Request(
+                    'http://localhost:8000/graphql',
+                    data=data,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    result = json.loads(response.read().decode('utf-8'))
+                    
+                    if 'data' in result and 'hello' in result['data']:
+                        graphql_status = f"{timestamp} GraphQL endpoint responsive: {result['data']['hello']}\n"
+                        with open(log_file_path, "a") as log_file:
+                            log_file.write(graphql_status)
+                    else:
+                        error_message = f"{timestamp} GraphQL endpoint error: Invalid response format\n"
+                        with open(log_file_path, "a") as log_file:
+                            log_file.write(error_message)
                         
         except Exception as graphql_error:
             error_message = f"{timestamp} GraphQL endpoint error: {str(graphql_error)}\n"

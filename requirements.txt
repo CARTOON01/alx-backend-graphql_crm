@@ -1,4 +1,5 @@
 Django==5.2.4
 graphene-django
 django-filters
-django-crontab
+django-crontab==0.7.1
+gql
